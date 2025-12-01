@@ -1,18 +1,29 @@
 "use client";
-
 import { useState } from "react";
 import CaseTypeSelection from "@/components/register/CaseTypeSelection";
 import ScammerInfoForm from "@/components/register/ScammerInfoForm";
 import StatementEditor from "@/components/register/StatementEditor";
+import useAuthStore from "@/store/useAuthStore";
 
 type Step = "case-type" | "scammer-info" | "statement";
+
+interface ScammerInfo {
+  info_type: string;
+  value: string;
+}
+
+interface ErrorResponse {
+  detail?: { loc?: string[]; msg?: string }[] | string;
+  message?: string;
+  error?: string;
+}
 
 export default function RegisterPage() {
   const [currentStep, setCurrentStep] = useState<Step>("case-type");
   const [formData, setFormData] = useState({
     caseType: "",
     caseTypeOther: "",
-    scammerInfos: [] as Array<{ info_type: string; value: string }>,
+    scammerInfos: [] as ScammerInfo[],
     statement: "",
   });
 
@@ -21,9 +32,7 @@ export default function RegisterPage() {
     setCurrentStep("scammer-info");
   };
 
-  const handleScammerInfoNext = (
-    infos: Array<{ info_type: string; value: string }>,
-  ) => {
+  const handleScammerInfoNext = (infos: ScammerInfo[]) => {
     setFormData((prev) => ({ ...prev, scammerInfos: infos }));
     setCurrentStep("statement");
   };
@@ -40,28 +49,88 @@ export default function RegisterPage() {
     setFormData((prev) => ({ ...prev, statement }));
 
     try {
-      const response = await fetch("/api/cases", {
+      const { accessToken } = useAuthStore.getState();
+
+      if (!accessToken) {
+        alert("로그인이 필요합니다.");
+        return;
+      }
+
+      if (!statement || statement.trim() === "") {
+        alert("피해 진술서를 작성해주세요.");
+        return;
+      }
+
+      const requestBody = {
+        case_type: formData.caseType,
+        case_type_other: formData.caseTypeOther || null,
+        statement: statement.trim(),
+        scammer_infos:
+          formData.scammerInfos.length > 0 ? formData.scammerInfos : [],
+      };
+
+      console.log("=== API 요청 시작 ===");
+      console.log("Request body:", JSON.stringify(requestBody, null, 2));
+
+      const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL_AI}/api/case`;
+
+      const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify({
-          case_type: formData.caseType,
-          case_type_other: formData.caseTypeOther,
-          statement,
-          scammer_infos: formData.scammerInfos,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
+      console.log("Response status:", response.status);
+      console.log("Response ok:", response.ok);
+
       if (response.ok) {
-        // 성공 시 케이스 목록 페이지로 이동
+        const responseData = await response.json();
+        console.log("Response data:", responseData);
+        alert("신고가 성공적으로 등록되었습니다.");
         window.location.href = "/cases";
       } else {
-        alert("신고 등록에 실패했습니다.");
+        let errorData: ErrorResponse;
+        try {
+          errorData = await response.json();
+        } catch (_e) {
+          errorData = { error: "알 수 없는 오류가 발생했습니다." };
+        }
+
+        console.error("=== API 에러 ===");
+        console.error("Error response:", errorData);
+
+        if (response.status === 422 && errorData.detail) {
+          if (Array.isArray(errorData.detail)) {
+            const validationErrors = errorData.detail
+              .map((err) => `${err.loc?.join(".") || "필드"}: ${err.msg}`)
+              .join("\n");
+            alert(`입력 데이터 오류:\n${validationErrors}`);
+          } else {
+            alert(`입력 데이터 오류: ${errorData.detail}`);
+          }
+        } else {
+          const errorMessage =
+            errorData.detail ||
+            errorData.message ||
+            errorData.error ||
+            "신고 등록에 실패했습니다.";
+          alert(`신고 등록 실패: ${errorMessage}`);
+        }
       }
     } catch (error) {
-      console.error("Error submitting case:", error);
-      alert("오류가 발생했습니다.");
+      console.error("=== Exception 발생 ===");
+      console.error("Error:", error);
+
+      if (error instanceof TypeError && error.message.includes("fetch")) {
+        alert("네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.");
+      } else if (error instanceof Error) {
+        alert(`오류가 발생했습니다: ${error.message}`);
+      } else {
+        alert("알 수 없는 오류가 발생했습니다. 콘솔을 확인해주세요.");
+      }
     }
   };
 

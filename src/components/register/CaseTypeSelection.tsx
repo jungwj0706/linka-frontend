@@ -25,10 +25,9 @@ const caseTypes = [
 ];
 
 const columns = [
-  caseTypes.slice(0, 3),
-  caseTypes.slice(3, 6),
-  caseTypes.slice(6, 9),
-  caseTypes.slice(9, 12),
+  caseTypes.slice(0, 4),
+  caseTypes.slice(4, 8),
+  caseTypes.slice(8, 12),
 ];
 
 const Toast = Swal.mixin({
