@@ -21,16 +21,14 @@ export async function GET(req: Request) {
     console.log("token preview:", token.substring(0, 20) + "...");
 
     console.log("Fetching from backend...");
-    const res = await fetch(
-      "http://linka-backend.dokploy.byeolki.me/api/users/me",
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
+    const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
       },
-    );
+    });
 
     console.log("Backend response status:", res.status);
     const text = await res.text();
