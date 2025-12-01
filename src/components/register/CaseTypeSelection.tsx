@@ -74,11 +74,7 @@ export default function CaseTypeSelection({
         <div className="h-full relative">
           <button
             onClick={handleNext}
-            className={`absolute right-5 top-1/2 transform -translate-y-1/2 p-4 rounded-full text-white pointer-events-auto transition-opacity ${
-              selectedType
-                ? "hover:opacity-80"
-                : "opacity-30 cursor-not-allowed"
-            }`}
+            className={`absolute right-5 top-1/2 transform -translate-y-1/2 p-4 rounded-full text-white pointer-events-auto transition-opacity`}
             aria-label="다음"
           >
             <Icon icon="mdi:chevron-right" className="w-22 h-22" />

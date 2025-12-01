@@ -3,7 +3,7 @@
 import { useState } from "react";
 import CaseTypeSelection from "@/components/register/CaseTypeSelection";
 import ScammerInfoForm from "@/components/register/ScammerInfoForm";
-// import StatementEditor from "@/components/register/StatementEditor";
+import StatementEditor from "@/components/register/StatementEditor";
 
 type Step = "case-type" | "scammer-info" | "statement";
 
@@ -82,13 +82,13 @@ export default function RegisterPage() {
           initialData={formData.scammerInfos}
         />
       )}
-      {/* {currentStep === "statement" && (
+      {currentStep === "statement" && (
         <StatementEditor
           onSubmit={handleStatementSubmit}
           onBack={handleStatementBack}
           initialStatement={formData.statement}
         />
-      )} */}
+      )}
     </div>
   );
 }

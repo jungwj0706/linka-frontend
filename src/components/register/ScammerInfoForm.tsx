@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import Header from "@/components/layout/Header";
+import { Icon } from "@iconify/react";
 
 type ScammerInfo = {
   info_type: string;
@@ -45,14 +46,56 @@ export default function ScammerInfoForm({
   return (
     <div className="min-h-screen text-white">
       <Header />
+      <div className="fixed inset-0 pointer-events-none z-50">
+        <div className="h-full relative">
+          <button
+            onClick={onBack}
+            className="absolute left-5 top-1/2 transform -translate-y-1/2 p-4 rounded-full text-white pointer-events-auto hover:bg-white/10"
+            aria-label="이전"
+          >
+            <Icon icon="mdi:chevron-left" className="w-18 h-18" />
+          </button>
+
+          <button
+            onClick={handleNextClick}
+            className="absolute right-5 top-1/2 transform -translate-y-1/2 p-4 rounded-full text-white pointer-events-auto hover:opacity-80"
+            aria-label="다음"
+          >
+            <Icon icon="mdi:chevron-right" className="w-18 h-18" />
+          </button>
+        </div>
+      </div>
+
+      <div className="fixed inset-0 pointer-events-none z-50">
+        <div className="h-full relative">
+          <button
+            onClick={onBack}
+            className="absolute left-5 top-1/2 transform -translate-y-1/2 p-4 rounded-full text-white pointer-events-auto"
+            aria-label="이전"
+          >
+            <Icon icon="mdi:chevron-left" className="w-18 h-18" />
+          </button>
+
+          <button
+            onClick={handleNextClick}
+            className="absolute right-5 top-1/2 transform -translate-y-1/2 p-4 rounded-full text-white pointer-events-auto"
+            aria-label="다음"
+          >
+            <Icon icon="mdi:chevron-right" className="w-18 h-18" />
+          </button>
+        </div>
+      </div>
 
       <main className="flex-1 flex items-center justify-center px-4">
         <div className="w-full max-w-2xl mt-40">
           <div className="text-center mb-12">
             <h1 className="text-4xl font-bold mb-4">가해자 정보 입력</h1>
             <p className="text-gray-300">
-              가해자에 대해 알고 있는 정보를 입력해주세요. (필수 항목 이외는
-              선택사항입니다)
+              가해자에 대해 알고 있는 정보를 입력해주세요.
+            </p>
+            <p className="text-gray-300">
+              (<span className="text-red-500">*</span> 표시가 되어있는 필수 항목
+              이외는 선택사항입니다)
             </p>
           </div>
 
