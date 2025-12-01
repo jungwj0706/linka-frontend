@@ -22,7 +22,7 @@ export async function GET(req: Request) {
 
     console.log("Fetching from backend...");
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
-    const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
+    const res = await fetch(`${API_BASE_URL}/api/users/me`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
