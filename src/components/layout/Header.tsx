@@ -1,6 +1,5 @@
 "use client";
-
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -9,22 +8,30 @@ import useAuthStore from "../../store/useAuthStore";
 export default function Header() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-black/20 backdrop-blur-md border-b border-[#fafafa]/10">
       <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
         <div className="flex items-center gap-3">
-          <Image
-            src="/logo/logo-w.svg"
-            alt="LINKA Logo"
-            width={120}
-            height={120}
-            className="shadow-lg"
-          />
+          <Link href="/">
+            <Image
+              src="/logo/logo-w.svg"
+              alt="LINKA Logo"
+              width={150}
+              height={150}
+            />
+          </Link>
         </div>
-
         <div className="flex items-center gap-3">
-          {user ? (
+          {!mounted ? (
+            // 서버 렌더링 시 또는 hydration 전에 보여줄 UI (깜빡임 방지)
+            <div className="w-[200px] h-[42px]" />
+          ) : user ? (
             <>
               {/* 로그인 후 사용자명 */}
               <button className="px-5 py-2 text-[#fafafa]/90 hover:text-[#fafafa] transition-colors font-medium">
