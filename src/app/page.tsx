@@ -11,7 +11,7 @@ import {
   ChevronRight,
   ChevronDown,
 } from "lucide-react";
-import useAuthStore from "../store/useAuthStore";
+import useAuthStore from "@/store/useAuthStore";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 
