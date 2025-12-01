@@ -3,15 +3,15 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import useAuthStore from "../../store/useAuthStore";
 import Link from "next/link";
 
-export default function LoginPage() {
+export default function SignUpPage() {
   const router = useRouter();
-  const { setAccessToken } = useAuthStore();
   const [formData, setFormData] = useState({
     username: "",
+    display_name: "",
     password: "",
+    passwordConfirm: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -19,33 +19,47 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setError("");
+
+    // 비밀번호 확인 검증
+    if (formData.password !== formData.passwordConfirm) {
+      setError("비밀번호가 일치하지 않습니다.");
+      return;
+    }
+
+    // 필수 필드 검증
+    if (!formData.username || !formData.display_name || !formData.password) {
+      setError("모든 필드를 입력해주세요.");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const formBody = new URLSearchParams();
-      formBody.append("username", formData.username);
-      formBody.append("password", formData.password);
-      formBody.append("grant_type", "password");
-
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
       const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
+          "Content-Type": "application/json",
         },
-        body: formBody.toString(),
+        body: JSON.stringify({
+          username: formData.username,
+          display_name: formData.display_name,
+          password: formData.password,
+          bio: "",
+          avatar_url: "",
+        }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || "로그인에 실패했습니다.");
+        throw new Error(errorData.detail || "회원가입에 실패했습니다.");
       }
 
-      const data = await response.json();
-      setAccessToken(data.access_token);
-      router.push("/");
+      // 회원가입 성공 시 로그인 페이지로 이동
+      alert("회원가입이 완료되었습니다. 로그인해주세요.");
+      router.push("/login");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "로그인에 실패했습니다.");
+      setError(err instanceof Error ? err.message : "회원가입에 실패했습니다.");
     } finally {
       setIsLoading(false);
     }
@@ -69,7 +83,7 @@ export default function LoginPage() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center px-4"
+      className="min-h-screen flex items-center justify-center px-4 py-12"
       style={{
         background: "linear-gradient(180deg, #00353D 0%, #00252A 50%)",
       }}
@@ -87,11 +101,11 @@ export default function LoginPage() {
                 />
               </Link>
             </div>
-            <h1 className="text-2xl font-bold text-[#00353D]">로그인</h1>
+            <h1 className="text-2xl font-bold text-[#00353D]">회원가입</h1>
           </div>
 
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl w-full">
               <p className="text-red-600 text-sm text-center">{error}</p>
             </div>
           )}
@@ -102,7 +116,7 @@ export default function LoginPage() {
                 htmlFor="username"
                 className="text-[#00353D] font-semibold mb-2"
               >
-                아이디
+                아이디 <span className="text-red-500">*</span>
               </label>
               <input
                 id="username"
@@ -119,10 +133,30 @@ export default function LoginPage() {
 
             <div className="flex flex-col w-full">
               <label
+                htmlFor="display_name"
+                className="text-[#00353D] font-semibold mb-2"
+              >
+                사용자 이름 <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="display_name"
+                name="display_name"
+                type="text"
+                required
+                value={formData.display_name}
+                onChange={handleChange}
+                onKeyPress={handleKeyPress}
+                placeholder="사용자 이름"
+                className="w-full px-4 py-3.5 border-2 border-[#00353D]/30 rounded-xl focus:outline-none focus:border-[#00353D] placeholder:text-gray-400 text-[#00353D] transition-all"
+              />
+            </div>
+
+            <div className="flex flex-col w-full">
+              <label
                 htmlFor="password"
                 className="text-[#00353D] font-semibold mb-2"
               >
-                비밀번호
+                비밀번호 <span className="text-red-500">*</span>
               </label>
               <input
                 id="password"
@@ -137,29 +171,55 @@ export default function LoginPage() {
               />
             </div>
 
+            <div className="flex flex-col w-full">
+              <label
+                htmlFor="passwordConfirm"
+                className="text-[#00353D] font-semibold mb-2"
+              >
+                비밀번호 확인 <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="passwordConfirm"
+                name="passwordConfirm"
+                type="password"
+                required
+                value={formData.passwordConfirm}
+                onChange={handleChange}
+                onKeyPress={handleKeyPress}
+                placeholder="비밀번호 확인"
+                className="w-full px-4 py-3.5 border-2 border-[#00353D]/30 rounded-xl focus:outline-none focus:border-[#00353D] placeholder:text-gray-400 text-[#00353D] transition-all"
+              />
+            </div>
+
             <button
               onClick={handleSubmit}
               disabled={isLoading}
-              className="w-full py-4 bg-[#00353D] text-white font-bold rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-4 bg-[#00353D] text-white font-bold rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-2"
             >
-              {isLoading ? "로그인 중..." : "로그인"}
+              {isLoading ? "가입 중..." : "회원가입"}
             </button>
           </div>
 
-          <div className="mt-6 flex flex-col gap-2 text-center">
+          <div className="mt-6 text-center">
+            <p className="text-[#00353D]/70 text-sm mb-2">
+              이미 계정이 있으신가요?
+            </p>
             <button
-              onClick={() => router.push("/forgot-password")}
+              onClick={() => router.push("/login")}
               className="text-[#00353D] font-medium hover:underline"
             >
-              비밀번호 찾기
-            </button>
-            <button
-              onClick={() => router.push("/signup")}
-              className="text-[#00353D] font-medium hover:underline"
-            >
-              회원가입
+              로그인하기
             </button>
           </div>
+        </div>
+
+        <div className="mt-6 text-center">
+          <button
+            onClick={() => router.push("/")}
+            className="text-teal-200 hover:text-white transition-colors font-medium"
+          >
+            ← 홈으로 돌아가기
+          </button>
         </div>
       </div>
     </div>

@@ -12,6 +12,8 @@ import {
   ChevronDown,
 } from "lucide-react";
 import useAuthStore from "../store/useAuthStore";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 
 export default function MainPage() {
   const router = useRouter();
@@ -32,6 +34,7 @@ export default function MainPage() {
         background: "linear-gradient(180deg, #00353D 0%, #00252A 100%)",
       }}
     >
+      <Header />
       <div className="h-25"></div>
 
       <section className="pt-32 pb-24 px-6">
@@ -412,6 +415,8 @@ export default function MainPage() {
           </p>
         </div>
       </section>
+
+      <Footer />
     </div>
   );
 }

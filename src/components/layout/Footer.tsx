@@ -2,18 +2,21 @@
 
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Footer() {
   return (
     <footer className="border-t border-[#fafafa]/10 bg-black/20 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-6 py-16">
         <div className="flex justify-center mb-12">
-          <Image
-            src="/logo/logo-w.svg"
-            alt="LINKA Logo"
-            width={150}
-            height={150}
-          />
+          <Link href="/">
+            <Image
+              src="/logo/logo-w.svg"
+              alt="LINKA Logo"
+              width={150}
+              height={150}
+            />
+          </Link>
         </div>
 
         <p className="text-center text-[#fafafa]/80 text-lg mb-16 max-w-3xl mx-auto">
