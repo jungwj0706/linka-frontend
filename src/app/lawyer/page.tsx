@@ -1,66 +1,57 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import {
-  User,
-  MessageSquare,
-  Bell,
-  Settings,
-  FileText,
-  Search,
-} from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import type { Lawyer, LawyerValue } from "@/types/lawyer";
+import LawyerCard from "@/components/lawyer/LawyerCard";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import { apiClient } from "@/lib/api-client";
-import type { Lawyer } from "@/types/api";
 
-const LawyerSearchPage = () => {
-  const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+// 카테고리 타입
+const categories = [
+  "전체",
+  "직거래",
+  "보험/사기",
+  "방문판매",
+  "사칭/위조",
+  "전세/임대",
+  "로맨스",
+  "스미싱",
+  "허위광고",
+  "중고거래",
+  "투자유인",
+  "계정도용",
+  "기타",
+];
+
+export default function LawyerListPage() {
   const [lawyers, setLawyers] = useState<Lawyer[]>([]);
+  const [filteredLawyers, setFilteredLawyers] = useState<Lawyer[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState("전체");
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const categories = [
-    "전체",
-    "직거래",
-    "보험/사기",
-    "방문판매",
-    "사칭/위조",
-    "전세/월세",
-    "로맨스",
-    "스미싱",
-    "허위광고",
-    "중고거래",
-    "투자유인",
-    "계정도용",
-    "기타",
-  ];
-
-  // 변호사 목록 불러오기 (실제로는 목록 API가 필요하지만, 일단 샘플 데이터 사용)
+  // 변호사 목록 불러오기
   useEffect(() => {
     const fetchLawyers = async () => {
       try {
-        // TODO: 실제 변호사 목록 API 엔드포인트 추가 필요
-        // const lawyersData = await apiClient.getLawyers();
-        // setLawyers(lawyersData);
+        setLoading(true);
+        // 현재는 예시로 여러 ID를 시도해봅니다.
+        const lawyerPromises = Array.from({ length: 10 }, (_, i) =>
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/lawyers/${i + 1}`)
+            .then((res) => (res.ok ? res.json() : null))
+            .catch(() => null),
+        );
 
-        // 임시 데이터
-        setLawyers([
-          {
-            id: 1,
-            lawyer_id: { val: "lawyer001" },
-            lawyer_name: { val: "홍길동" },
-            bio: { val: "전문 변호사입니다." },
-            avatar_url: { val: "/example.png" },
-            specializations: [{ val: "중고거래" }, { val: "직거래" }],
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-        ]);
-      } catch (error) {
-        console.error("Failed to fetch lawyers:", error);
+        const results = await Promise.all(lawyerPromises);
+        const validLawyers = results.filter((lawyer) => lawyer !== null);
+
+        setLawyers(validLawyers);
+        setFilteredLawyers(validLawyers);
+        setError(null);
+      } catch (err) {
+        setError("변호사 목록을 불러오는데 실패했습니다.");
+        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -69,168 +60,110 @@ const LawyerSearchPage = () => {
     fetchLawyers();
   }, []);
 
-  const toggleCategory = (category: string) => {
-    if (selectedCategories.includes(category)) {
-      setSelectedCategories(selectedCategories.filter((c) => c !== category));
-    } else {
-      setSelectedCategories([...selectedCategories, category]);
+  // 검색 및 필터링
+  useEffect(() => {
+    let filtered = lawyers;
+
+    // 카테고리 필터
+    if (selectedCategory !== "전체") {
+      filtered = filtered.filter((lawyer) =>
+        lawyer.specializations?.some(
+          (spec: LawyerValue) => spec.val === selectedCategory,
+        ),
+      );
     }
-  };
 
-  const filteredLawyers = lawyers.filter((lawyer) => {
-    // 검색어 필터링
-    const matchesSearch =
-      searchQuery === "" ||
-      lawyer.lawyer_name.val.includes(searchQuery) ||
-      lawyer.specializations.some((s) => s.val.includes(searchQuery));
+    // 검색어 필터
+    if (searchQuery.trim()) {
+      filtered = filtered.filter(
+        (lawyer) =>
+          lawyer.lawyer_name?.val
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          lawyer.bio?.val.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          lawyer.specializations?.some((spec: LawyerValue) =>
+            spec.val.toLowerCase().includes(searchQuery.toLowerCase()),
+          ),
+      );
+    }
 
-    // 카테고리 필터링
-    const matchesCategory =
-      selectedCategories.length === 0 ||
-      selectedCategories.includes("전체") ||
-      lawyer.specializations.some((s) => selectedCategories.includes(s.val));
-
-    return matchesSearch && matchesCategory;
-  });
-
-  const handleLawyerClick = (lawyerId: string) => {
-    router.push(`/lawyer/${lawyerId}`);
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#00353d] flex items-center justify-center">
-        <div className="text-white text-xl">로딩 중...</div>
-      </div>
-    );
-  }
+    setFilteredLawyers(filtered);
+  }, [selectedCategory, searchQuery, lawyers]);
 
   return (
-    <div className="min-h-screen bg-[#00353d]">
-      <Header />
+    <div className="min-h-screen bg-[#00353D]">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <Header />
+        <div className="h-25"></div>
+        <h1 className="text-3xl font-bold text-white mb-8">
+          내 사건에 딱 맞는 변호사를 찾아보세요.
+        </h1>
 
-      <div className="max-w-7xl mx-auto p-6">
-        <div className="flex gap-6">
-          {/* Sidebar */}
-          <div className="w-48 space-y-2">
-            <button className="w-full flex items-center gap-3 px-4 py-3 text-white/70 hover:bg-white/5 rounded-lg transition">
-              <User size={20} />
-              <span>개인 채팅</span>
+        {/* 검색창 */}
+        <div className="mb-6">
+          <input
+            type="text"
+            placeholder="질문 분야, 변호사 이름 검색..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full px-4 py-3 rounded-lg bg-[#fafafa] text-[#00353D] placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#00353D]"
+          />
+        </div>
+
+        {/* 카테고리 필터 */}
+        <div className="flex flex-wrap gap-2 mb-8">
+          {categories.map((category) => (
+            <button
+              key={category}
+              onClick={() => setSelectedCategory(category)}
+              className={`px-4 py-2 rounded-full transition-colors ${
+                selectedCategory === category
+                  ? "bg-white text-[#00353D]"
+                  : "bg-transparent text-white border border-white hover:bg-white/10"
+              }`}
+            >
+              {category}
             </button>
-            <button className="w-full flex items-center gap-3 px-4 py-3 text-white/70 hover:bg-white/5 rounded-lg transition">
-              <MessageSquare size={20} />
-              <span>채팅방</span>
-            </button>
-            <button className="w-full flex items-center gap-3 px-4 py-3 text-white/70 hover:bg-white/5 rounded-lg transition">
-              <Bell size={20} />
-              <span>알람</span>
-            </button>
-            <button className="w-full flex items-center gap-3 px-4 py-3 text-white/70 hover:bg-white/5 rounded-lg transition">
-              <Settings size={20} />
-              <span>설정</span>
-            </button>
-            <button className="w-full flex items-center gap-3 px-4 py-3 bg-[#0F4A55] text-white rounded-lg">
-              <FileText size={20} />
-              <span>변호사 검색</span>
-            </button>
+          ))}
+        </div>
+
+        {/* 로딩 상태 */}
+        {loading && (
+          <div className="text-center py-12">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+            <p className="text-white mt-4">변호사 목록을 불러오는 중...</p>
           </div>
+        )}
 
-          {/* Main Content */}
-          <div className="flex-1">
-            <h1 className="text-white text-3xl font-bold mb-6">
-              내 사건에 딱 맞는 변호사를 찾아보세요.
-            </h1>
+        {/* 에러 상태 */}
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
 
-            {/* Search Bar */}
-            <div className="relative mb-6">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="전문 분야, 변호사 이름 검색..."
-                className="w-full px-6 py-4 rounded-xl bg-[#fafafa] text-[#00353d] placeholder-[#00353d]/40 text-lg focus:outline-none focus:ring-2 focus:ring-[#0F4A55]"
-              />
-              <Search
-                className="absolute right-6 top-1/2 -translate-y-1/2 text-[#00353d]/40"
-                size={24}
-              />
-            </div>
-
-            {/* Category Tags */}
-            <div className="flex flex-wrap gap-3 mb-8">
-              {categories.map((category) => (
-                <button
-                  key={category}
-                  onClick={() => toggleCategory(category)}
-                  className={`px-6 py-2.5 rounded-full border-2 transition ${
-                    selectedCategories.includes(category)
-                      ? "bg-[#0F4A55] border-[#0F4A55] text-white"
-                      : "border-white/30 text-white hover:border-white/50"
-                  }`}
-                >
-                  {category}
-                </button>
-              ))}
-            </div>
-
-            {/* Lawyer Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {filteredLawyers.map((lawyer) => (
-                <div
-                  key={lawyer.id}
-                  className="bg-[#fafafa] rounded-2xl p-6 flex flex-col items-center cursor-pointer hover:shadow-xl transition"
-                  onClick={() => handleLawyerClick(lawyer.lawyer_id.val)}
-                >
-                  <div className="w-32 h-32 rounded-full mb-4 overflow-hidden">
-                    <img
-                      src={lawyer.avatar_url.val || "/example.png"}
-                      alt={lawyer.lawyer_name.val}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <h3 className="text-[#00353d] font-bold text-xl mb-3">
-                    {lawyer.lawyer_name.val} 변호사
-                  </h3>
-                  <div className="flex gap-2 mb-4 flex-wrap justify-center">
-                    {lawyer.specializations.slice(0, 2).map((tag, index) => (
-                      <span
-                        key={index}
-                        className="text-[#0F4A55] text-sm font-medium"
-                      >
-                        #{tag.val}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="text-[#00353d] mb-2 text-center">
-                    누적 상담 : 17건
-                  </div>
-                  <div className="text-[#00353d] mb-6 text-center">
-                    사건 수임 기준가 : 440만 원
-                  </div>
-                  <button
-                    className="w-full bg-[#00353d] text-white py-3 rounded-xl font-medium hover:bg-[#0F4A55] transition"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleLawyerClick(lawyer.lawyer_id.val);
-                    }}
-                  >
-                    변호사 세부 정보 보기
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            {filteredLawyers.length === 0 && (
-              <div className="text-center text-white text-xl py-12">
-                검색 결과가 없습니다.
+        {/* 변호사 목록 */}
+        {!loading && !error && (
+          <>
+            {filteredLawyers.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-white text-lg">검색 결과가 없습니다.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {filteredLawyers.map((lawyer) => (
+                  <LawyerCard
+                    key={lawyer.id}
+                    lawyer={lawyer}
+                    reviewCount={17}
+                    averageFee="440만 원"
+                  />
+                ))}
               </div>
             )}
-          </div>
-        </div>
+          </>
+        )}
       </div>
-      <Footer />
     </div>
   );
-};
-
-export default LawyerSearchPage;
+}

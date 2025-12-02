@@ -23,8 +23,8 @@ export default function RegisterPage() {
   const [formData, setFormData] = useState({
     caseType: "",
     caseTypeOther: "",
-    scammerInfos: [] as ScammerInfo[],
     statement: "",
+    scammerInfos: [] as ScammerInfo[],
   });
 
   const handleCaseTypeSelect = (type: string) => {

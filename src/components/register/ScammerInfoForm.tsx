@@ -1,6 +1,9 @@
+"use client";
+
 import React, { useState } from "react";
 import Header from "@/components/layout/Header";
 import { Icon } from "@iconify/react";
+import useAuthStore from "@/store/useAuthStore";
 
 type ScammerInfo = {
   info_type: string;
@@ -13,73 +16,80 @@ interface ScammerInfoFormProps {
   initialData: ScammerInfo[];
 }
 
+const SCAMMER_TYPES = [
+  { label: "이름", value: "name" },
+  { label: "닉네임", value: "nickname" },
+  { label: "전화번호", value: "phone" },
+  { label: "계좌번호", value: "account" },
+  { label: "SNS ID", value: "sns_id" },
+];
+
+export async function fetchWithAuth(url: string, options: RequestInit = {}) {
+  const token = useAuthStore.getState().accessToken;
+
+  console.log("JWT Access Token:", token);
+
+  const headers = {
+    ...(options.headers || {}),
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  };
+
+  return fetch(url, {
+    ...options,
+    headers,
+  });
+}
+
 export default function ScammerInfoForm({
   onNext,
   onBack,
   initialData,
 }: ScammerInfoFormProps) {
-  const [formData, setFormData] = useState({
-    nickname: initialData.find((v) => v.info_type === "nickname")?.value || "",
-    accountNumber:
-      initialData.find((v) => v.info_type === "accountNumber")?.value || "",
-    contact: initialData.find((v) => v.info_type === "contact")?.value || "",
-  });
+  const [fields, setFields] = useState<ScammerInfo[]>(
+    initialData.length > 0
+      ? initialData
+      : [{ info_type: "nickname", value: "" }],
+  );
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+  const handleAddField = () => {
+    setFields((prev) => [...prev, { info_type: "name", value: "" }]);
+  };
+
+  const handleFieldChange = (
+    index: number,
+    key: "info_type" | "value",
+    value: string,
+  ) => {
+    setFields((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, [key]: value } : item)),
+    );
+  };
+
+  const handleRemoveField = (index: number) => {
+    setFields((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleNextClick = () => {
-    const infos: ScammerInfo[] = [
-      { info_type: "nickname", value: formData.nickname },
-      { info_type: "accountNumber", value: formData.accountNumber },
-      { info_type: "contact", value: formData.contact },
-    ];
-
-    onNext(infos);
+    onNext(fields);
   };
 
   return (
     <div className="min-h-screen text-white">
       <Header />
+
       <div className="fixed inset-0 pointer-events-none z-50">
         <div className="h-full relative">
           <button
             onClick={onBack}
             className="absolute left-5 top-1/2 transform -translate-y-1/2 p-4 rounded-full text-white pointer-events-auto hover:bg-white/10"
-            aria-label="이전"
           >
             <Icon icon="mdi:chevron-left" className="w-18 h-18" />
           </button>
 
           <button
             onClick={handleNextClick}
-            className="absolute right-5 top-1/2 transform -translate-y-1/2 p-4 rounded-full text-white pointer-events-auto hover:opacity-80"
-            aria-label="다음"
-          >
-            <Icon icon="mdi:chevron-right" className="w-18 h-18" />
-          </button>
-        </div>
-      </div>
-
-      <div className="fixed inset-0 pointer-events-none z-50">
-        <div className="h-full relative">
-          <button
-            onClick={onBack}
-            className="absolute left-5 top-1/2 transform -translate-y-1/2 p-4 rounded-full text-white pointer-events-auto"
-            aria-label="이전"
-          >
-            <Icon icon="mdi:chevron-left" className="w-18 h-18" />
-          </button>
-
-          <button
-            onClick={handleNextClick}
-            className="absolute right-5 top-1/2 transform -translate-y-1/2 p-4 rounded-full text-white pointer-events-auto"
-            aria-label="다음"
+            className="absolute right-5 top-1/2 transform -translate-y-1/2 p-4 rounded-full text-white pointer-events-auto hover:bg-white/10"
           >
             <Icon icon="mdi:chevron-right" className="w-18 h-18" />
           </button>
@@ -90,57 +100,66 @@ export default function ScammerInfoForm({
         <div className="w-full max-w-2xl mt-40">
           <div className="text-center mb-12">
             <h1 className="text-4xl font-bold mb-4">가해자 정보 입력</h1>
+            <p className="text-gray-300">아는 만큼 입력해주세요.</p>
             <p className="text-gray-300">
-              가해자에 대해 알고 있는 정보를 입력해주세요.
-            </p>
-            <p className="text-gray-300">
-              (<span className="text-red-500">*</span> 표시가 되어있는 필수 항목
-              이외는 선택사항입니다)
+              (타입을 고르고 정보를 입력할 수 있어요)
             </p>
           </div>
 
-          <div className="bg-[#fafafa] rounded-lg p-8 space-y-6">
-            <div>
-              <label className="block text-gray-800 font-medium mb-3">
-                가해자 닉네임 또는 이름 <span className="text-red-600">*</span>
-              </label>
-              <input
-                type="text"
-                name="nickname"
-                value={formData.nickname}
-                onChange={handleChange}
-                placeholder="가해자의 실명 혹은 가해자가 사용했던 닉네임을 입력해주세요."
-                className="w-full px-4 py-3 rounded-lg border border-black text-gray-800 placeholder-gray-500 focus:outline-none"
-              />
-            </div>
+          <div className="bg-[#fafafa] rounded-3xl p-8 space-y-6 text-black">
+            {/* 동적 필드 */}
+            {fields.map((field, index) => (
+              <div
+                key={index}
+                className="bg-white rounded-xl border border-gray-300 p-4 relative"
+              >
+                <button
+                  className="absolute right-2 top-2 text-gray-400 hover:text-red-500"
+                  onClick={() => handleRemoveField(index)}
+                >
+                  <Icon icon="mdi:close" />
+                </button>
 
-            <div>
-              <label className="block text-gray-800 font-medium mb-3">
-                계좌주명
-              </label>
-              <input
-                type="text"
-                name="accountNumber"
-                value={formData.accountNumber}
-                onChange={handleChange}
-                placeholder="가해자의 계좌주명을 입력해주세요."
-                className="w-full px-4 py-3 rounded-lg border border-black text-gray-800 placeholder-gray-500 focus:outline-none"
-              />
-            </div>
+                <label className="block mb-2 font-medium text-gray-700">
+                  정보 타입 선택
+                </label>
+                <select
+                  value={field.info_type}
+                  onChange={(e) =>
+                    handleFieldChange(index, "info_type", e.target.value)
+                  }
+                  className="w-full px-4 py-3 rounded-lg border border-gray-400 text-gray-800"
+                >
+                  {SCAMMER_TYPES.map((t) => (
+                    <option key={t.value} value={t.value}>
+                      {t.label}
+                    </option>
+                  ))}
+                </select>
 
-            <div>
-              <label className="block text-gray-800 font-medium mb-3">
-                연락처
-              </label>
-              <input
-                type="text"
-                name="contact"
-                value={formData.contact}
-                onChange={handleChange}
-                placeholder="가해자의 연락처를 알고있다면 입력해주세요(전화번호, 메신저 ID 등)."
-                className="w-full px-4 py-3 rounded-lg border border-black text-gray-800 placeholder-gray-500 focus:outline-none"
-              />
-            </div>
+                <label className="block mt-4 mb-2 font-medium text-gray-700">
+                  내용 입력
+                </label>
+                <input
+                  type="text"
+                  value={field.value}
+                  onChange={(e) =>
+                    handleFieldChange(index, "value", e.target.value)
+                  }
+                  placeholder="해당 정보를 입력해주세요."
+                  className="w-full px-4 py-3 rounded-lg border border-gray-400 text-gray-800"
+                />
+              </div>
+            ))}
+
+            {/* + 추가 버튼 */}
+            <button
+              onClick={handleAddField}
+              className="w-full py-3 bg-black text-white rounded-xl text-lg hover:bg-gray-800"
+            >
+              <Icon icon="mdi:plus" className="inline-block mr-2 text-white" />
+              정보 추가
+            </button>
           </div>
         </div>
       </main>

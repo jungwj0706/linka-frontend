@@ -56,8 +56,8 @@ const useAuthStore = create<AuthState>((set, get) => ({
     }
 
     try {
-      console.log("Fetching /api/fetchUser...");
-      const response = await fetch("/api/fetchUser", {
+      console.log("Fetching /api/users/me...");
+      const response = await fetch("/api/users/me", {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,

@@ -6,20 +6,28 @@ import {
   User,
 } from "@/types/api";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 class ApiClient {
   private async request<T>(
     endpoint: string,
     options: RequestInit = {},
   ): Promise<T> {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      ...options.headers,
+    };
+
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("access_token");
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+    }
+
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...options.headers,
-      },
-      credentials: "include", // 쿠키 포함
+      headers,
     });
 
     if (!response.ok) {
@@ -27,10 +35,15 @@ class ApiClient {
       throw new Error(error.detail || "API request failed");
     }
 
-    return response.json();
+    // 응답 비어있는지 확인
+    const text = await response.text();
+    if (!text) {
+      return {} as T;
+    }
+
+    return JSON.parse(text);
   }
 
-  // User APIs
   async getMe(): Promise<User> {
     return this.request<User>("/api/users/me");
   }
@@ -53,7 +66,6 @@ class ApiClient {
     });
   }
 
-  // Lawyer APIs
   async getLawyerMe(): Promise<Lawyer> {
     return this.request<Lawyer>("/api/lawyers/me");
   }
@@ -83,7 +95,7 @@ class ApiClient {
   async createLawyerReview(
     lawyerId: number,
     review: string,
-    case_type: string
+    case_type: string,
   ): Promise<LawyerReview> {
     return this.request<LawyerReview>(`/api/lawyers/${lawyerId}/reviews`, {
       method: "POST",
@@ -91,16 +103,15 @@ class ApiClient {
     });
   }
 
-  // Auth APIs
   async login(username: string, password: string): Promise<void> {
-    return this.request<void>("/api/lawyer-auth/login", {
+    return this.request<void>("/api/auth/login", {
       method: "POST",
       body: JSON.stringify({ username, password }),
     });
   }
 
   async logout(): Promise<void> {
-    return this.request<void>("/api/lawyer-auth/logout", {
+    return this.request<void>("/api/auth/logout", {
       method: "POST",
     });
   }
@@ -109,10 +120,10 @@ class ApiClient {
     oldPassword: string,
     newPassword: string,
   ): Promise<void> {
-    return this.request<void>("/api/lawyer-auth/change-password", {
+    return this.request<void>("/api/auth/change-password", {
       method: "POST",
       body: JSON.stringify({
-        old_password: oldPassword,
+        current_password: oldPassword,
         new_password: newPassword,
       }),
     });

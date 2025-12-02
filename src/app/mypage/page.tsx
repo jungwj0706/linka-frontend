@@ -39,21 +39,20 @@ const MyPage = () => {
     avatar_url: "",
   });
 
-  // 사용자 정보 불러오기
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const userData = await apiClient.getMe();
+
         setUser(userData);
         setFormData({
           nickname: userData.display_name,
           username: userData.username,
           password: "",
-          bio: userData.bio,
-          avatar_url: userData.avatar_url,
+          bio: userData.bio || "",
+          avatar_url: userData.avatar_url || "",
         });
       } catch (error) {
-        console.error("Failed to fetch user:", error);
       } finally {
         setLoading(false);
       }
@@ -339,7 +338,7 @@ const MyPage = () => {
                   </div>
 
                   <div className="text-[#0A3840] text-2xl font-bold mt-10 mb-6">
-                    이명 설정
+                    익명 설정
                   </div>
 
                   <div className="flex items-center justify-between py-4">
@@ -352,7 +351,13 @@ const MyPage = () => {
                         className="sr-only peer"
                         defaultChecked
                       />
-                      <div className="w-14 h-7 bg-[#0A3840] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all"></div>
+                      <div
+                        className="w-14 h-7 bg-[#FAFAFA] peer-checked:bg-[#0A3840] 
+                        peer-focus:outline-none rounded-full 
+                        after:content-[''] after:absolute after:top-[2px] after:left-[2px] 
+                        after:bg-white after:rounded-full after:h-6 after:w-6 
+                        after:transition-all peer-checked:after:translate-x-full"
+                      ></div>
                     </label>
                   </div>
 
@@ -366,7 +371,13 @@ const MyPage = () => {
                         className="sr-only peer"
                         defaultChecked
                       />
-                      <div className="w-14 h-7 bg-[#0A3840] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all"></div>
+                      <div
+                        className="w-14 h-7 bg-[#FAFAFA] peer-checked:bg-[#0A3840] 
+                        peer-focus:outline-none rounded-full 
+                        after:content-[''] after:absolute after:top-[2px] after:left-[2px] 
+                        after:bg-white after:rounded-full after:h-6 after:w-6 
+                        after:transition-all peer-checked:after:translate-x-full"
+                      ></div>
                     </label>
                   </div>
 
@@ -375,8 +386,18 @@ const MyPage = () => {
                       사건 내역 숨기기
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" className="sr-only peer" />
-                      <div className="w-14 h-7 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-[#0A3840] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all"></div>
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
+                        defaultChecked
+                      />
+                      <div
+                        className="w-14 h-7 bg-[#FAFAFA] peer-checked:bg-[#0A3840] 
+      peer-focus:outline-none rounded-full 
+      after:content-[''] after:absolute after:top-[2px] after:left-[2px] 
+      after:bg-white after:rounded-full after:h-6 after:w-6 
+      after:transition-all peer-checked:after:translate-x-full"
+                      ></div>
                     </label>
                   </div>
                 </div>

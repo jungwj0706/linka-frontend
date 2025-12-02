@@ -51,6 +51,12 @@ export default function Header() {
             <>
               {/* 로그인 전 */}
               <button
+                onClick={() => router.push("/lawyer")}
+                className="px-5 py-2 text-[#fafafa]/90 hover:text-[#fafafa] transition-colors font-medium"
+              >
+                변호사 보기
+              </button>
+              <button
                 onClick={() => router.push("/login")}
                 className="px-5 py-2 text-[#fafafa]/90 hover:text-[#fafafa] transition-colors font-medium"
               >
